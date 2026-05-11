@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>テトリスコーヒー</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="titleScreen" class="screen active">
+      <div class="titleBox">
+
+        <img src="title.png" class="titleImage" alt="テトリスコーヒー">
+
+        <p>
+          テトリミノを崩して<br>
+          カフェオレをつくれ！
+        </p>
+
+        <button id="startBtn" class="mainBtn">
+          タップしてスタート
+        </button>
+
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+
+      <div class="topHud">
+        <div>CAFE AU LAIT</div>
+        <div><span id="countText">0</span>/20</div>
+      </div>
+
+      <canvas id="gameCanvas" width="240" height="360"></canvas>
+
+      <div class="controls">
+        <button id="leftBtn">◀</button>
+        <button id="dropBtn">落下</button>
+        <button id="rightBtn">▶</button>
+      </div>
+
+    </section>
+
+    <section id="resultScreen" class="screen">
+
+      <div class="resultBox">
+
+        <h2 id="resultTitle">結果</h2>
+
+        <canvas id="resultCanvas" width="240" height="180"></canvas>
+
+        <p id="resultScore"></p>
+        <p id="resultComment"></p>
+
+        <button id="retryBtn" class="mainBtn">
+          もう一杯つくる
+        </button>
+
+        <button id="homeBtn" class="subBtn">
+          タイトルへ戻る
+        </button>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <audio id="piSe" src="pi.mp3" preload="auto"></audio>
+
+  <script src="game.js"></script>
+</body>
+</html>
