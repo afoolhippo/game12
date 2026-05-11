@@ -1,23 +1,12 @@
 function setAppHeight() {
-  const h = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-
-  document.documentElement.style.setProperty(
-    "--app-height",
-    `${h}px`
-  );
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${h}px`);
 }
 
 setAppHeight();
-
 window.addEventListener("resize", setAppHeight);
-
 if (window.visualViewport) {
-  window.visualViewport.addEventListener(
-    "resize",
-    setAppHeight
-  );
+  window.visualViewport.addEventListener("resize", setAppHeight);
 }
 
 const titleScreen = document.getElementById("titleScreen");
@@ -44,340 +33,241 @@ const resultTitle = document.getElementById("resultTitle");
 const resultScore = document.getElementById("resultScore");
 const resultComment = document.getElementById("resultComment");
 
+const bgm = document.getElementById("bgm");
 const piSe = document.getElementById("piSe");
 
 const COLS = 24;
 const ROWS = 36;
-
 const CELL = 10;
 const PIECE_SCALE = 2;
-
 const MAX_PIECES = 20;
 
 const MATERIALS = {
-  coffee: {
-    color: "#7a3f22"
-  },
-
-  milk: {
-    color: "#f1e6c8"
-  },
-
-  water: {
-    color: "#78a8c8"
-  },
-
-  gravel: {
-    color: "#77776d"
-  }
+  coffee: { color: "#7a3f22" },
+  milk: { color: "#f1e6c8" },
+  water: { color: "#78a8c8" },
+  gravel: { color: "#77776d" }
 };
 
-const MATERIAL_LIST = [
-  "coffee",
-  "coffee",
-  "milk",
-  "milk",
-  "water",
-  "gravel"
-];
+const MATERIAL_LIST = ["coffee", "coffee", "milk", "milk", "water", "gravel"];
 
 const SHAPES = [
-  [[1,1,1,1]],
-
-  [[1,1],[1,1]],
-
-  [[0,1,0],[1,1,1]],
-
-  [[1,0,0],[1,1,1]],
-
-  [[0,0,1],[1,1,1]]
+  [[1, 1, 1, 1]],
+  [[1, 1], [1, 1]],
+  [[0, 1, 0], [1, 1, 1]],
+  [[1, 0, 0], [1, 1, 1]],
+  [[0, 0, 1], [1, 1, 1]],
+  [[0, 1, 1], [1, 1, 0]],
+  [[1, 1, 0], [0, 1, 1]]
 ];
 
 let grid;
 let piece;
+let piecesDropped = 0;
+let gameLoop = null;
+let dropCounter = 0;
+let sandCounter = 0;
+let running = false;
 
-let piecesDropped;
+function playBgm() {
+  bgm.volume = 0.55;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+}
 
-let gameLoop;
-
-let dropCounter;
-let sandCounter;
-
-let running;
-
-let inputLocked = false;
+function stopBgm() {
+  bgm.pause();
+  bgm.currentTime = 0;
+}
 
 function playPi() {
   piSe.currentTime = 0;
-  piSe.play();
+  piSe.volume = 0.8;
+  piSe.play().catch(() => {});
 }
 
 function showScreen(screen) {
-  [
-    titleScreen,
-    gameScreen,
-    resultScreen
-  ].forEach(s => s.classList.remove("active"));
-
+  [titleScreen, gameScreen, resultScreen].forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 
 function emptyGrid() {
-  return Array.from(
-    { length: ROWS },
-    () => Array(COLS).fill(null)
-  );
+  return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 }
 
 function rand(arr) {
-  return arr[
-    Math.floor(Math.random() * arr.length)
-  ];
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function createPiece() {
-  return {
-    shape: rand(SHAPES),
-    material: rand(MATERIAL_LIST),
+  const shape = rand(SHAPES).map(row => [...row]);
+  const width = shape[0].length * PIECE_SCALE;
 
-    x: Math.floor(COLS / 2) - 4,
+  return {
+    shape,
+    material: rand(MATERIAL_LIST),
+    x: Math.floor((COLS - width) / 2),
     y: 0
   };
 }
 
 function startGame() {
-
   grid = emptyGrid();
+  piecesDropped = 0;
+  dropCounter = 0;
+  sandCounter = 0;
+  running = true;
+  countText.textContent = "0";
 
   piece = createPiece();
 
-  piecesDropped = 0;
-
-  dropCounter = 0;
-  sandCounter = 0;
-
-  running = true;
-
-  countText.textContent = 0;
-
   showScreen(gameScreen);
+  playBgm();
 
   cancelAnimationFrame(gameLoop);
-
   loop();
 }
 
 function loop() {
-
   if (!running) return;
 
   dropCounter++;
   sandCounter++;
 
-  if (dropCounter >= 14) {
-    dropPiece();
+  if (dropCounter >= 12) {
+    softDrop();
     dropCounter = 0;
   }
 
-  if (sandCounter >= 3) {
+  if (sandCounter >= 2) {
     updateSand();
     sandCounter = 0;
   }
 
-  if (Math.random() < 0.1) {
+  if (Math.random() < 0.12) {
     loosenRandomBlock();
   }
 
   draw();
-
   gameLoop = requestAnimationFrame(loop);
 }
 
-function forEachPieceCell(callback) {
+function getPieceCells(targetPiece = piece) {
+  const cells = [];
 
-  for (let y = 0; y < piece.shape.length; y++) {
+  if (!targetPiece) return cells;
 
-    for (let x = 0; x < piece.shape[y].length; x++) {
-
-      if (!piece.shape[y][x]) continue;
+  for (let y = 0; y < targetPiece.shape.length; y++) {
+    for (let x = 0; x < targetPiece.shape[y].length; x++) {
+      if (!targetPiece.shape[y][x]) continue;
 
       for (let sy = 0; sy < PIECE_SCALE; sy++) {
-
         for (let sx = 0; sx < PIECE_SCALE; sx++) {
-
-          callback(
-            piece.x + x * PIECE_SCALE + sx,
-            piece.y + y * PIECE_SCALE + sy
-          );
+          cells.push({
+            x: targetPiece.x + x * PIECE_SCALE + sx,
+            y: targetPiece.y + y * PIECE_SCALE + sy
+          });
         }
       }
     }
   }
+
+  return cells;
 }
 
-function canMove(dx, dy) {
+function canMove(dx, dy, targetPiece = piece) {
+  if (!targetPiece) return false;
 
-  let ok = true;
+  const cells = getPieceCells(targetPiece);
 
-  forEachPieceCell((gx, gy) => {
+  for (const c of cells) {
+    const nx = c.x + dx;
+    const ny = c.y + dy;
 
-    const nx = gx + dx;
-    const ny = gy + dy;
+    if (nx < 0 || nx >= COLS || ny >= ROWS) return false;
+    if (ny >= 0 && grid[ny][nx]) return false;
+  }
 
-    if (
-      nx < 0 ||
-      nx >= COLS ||
-      ny >= ROWS
-    ) {
-      ok = false;
-    }
-
-    if (
-      ny >= 0 &&
-      grid[ny][nx]
-    ) {
-      ok = false;
-    }
-
-  });
-
-  return ok;
+  return true;
 }
 
 function movePiece(dx) {
-
-  if (
-    !running ||
-    inputLocked ||
-    !piece
-  ) return;
+  if (!running || !piece) return;
 
   if (canMove(dx, 0)) {
-
     piece.x += dx;
-
+    playPi();
     draw();
   }
 }
 
-function dropPiece() {
-
-  if (
-    !running ||
-    inputLocked ||
-    !piece
-  ) return;
+function softDrop() {
+  if (!running || !piece) return;
 
   if (canMove(0, 1)) {
-
     piece.y++;
-
   } else {
-
     lockPiece();
   }
 }
 
 function hardDropPiece() {
+  if (!running || !piece) return;
 
-  if (
-    !running ||
-    inputLocked ||
-    !piece
-  ) return;
-
-  inputLocked = true;
-
-  while (canMove(0,1)) {
+  while (canMove(0, 1)) {
     piece.y++;
   }
 
   lockPiece();
-
-  inputLocked = false;
-
   draw();
 }
 
 function lockPiece() {
+  if (!piece) return;
 
   const lockedPiece = piece;
+  const cells = getPieceCells(lockedPiece);
 
-  for (let y = 0; y < lockedPiece.shape.length; y++) {
-
-    for (let x = 0; x < lockedPiece.shape[y].length; x++) {
-
-      if (!lockedPiece.shape[y][x]) continue;
-
-      for (let sy = 0; sy < PIECE_SCALE; sy++) {
-
-        for (let sx = 0; sx < PIECE_SCALE; sx++) {
-
-          const gx =
-            lockedPiece.x +
-            x * PIECE_SCALE +
-            sx;
-
-          const gy =
-            lockedPiece.y +
-            y * PIECE_SCALE +
-            sy;
-
-          if (
-            gy >= 0 &&
-            gy < ROWS &&
-            gx >= 0 &&
-            gx < COLS
-          ) {
-
-            grid[gy][gx] = {
-              type: lockedPiece.material,
-              color: MATERIALS[
-                lockedPiece.material
-              ].color
-            };
-          }
-        }
-      }
+  for (const c of cells) {
+    if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
+      grid[c.y][c.x] = {
+        type: lockedPiece.material,
+        color: MATERIALS[lockedPiece.material].color
+      };
     }
   }
 
   piece = null;
-
   piecesDropped++;
+  countText.textContent = String(piecesDropped);
 
-  countText.textContent = piecesDropped;
-
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 20; i++) {
     updateSand();
   }
 
   if (piecesDropped >= MAX_PIECES) {
-
     finishGame();
-
     return;
   }
 
+  spawnNextPiece();
+}
+
+function spawnNextPiece() {
   piece = createPiece();
 
-  if (!canMove(0,0)) {
+  if (!canMove(0, 0, piece)) {
     finishGame();
   }
 }
 
 function loosenRandomBlock() {
-
   const candidates = [];
 
   for (let y = 0; y < ROWS - 1; y++) {
-
     for (let x = 0; x < COLS; x++) {
-
-      if (!grid[y][x]) continue;
-
-      if (!grid[y+1][x]) {
-        candidates.push({x,y});
+      if (grid[y][x] && !grid[y + 1][x]) {
+        candidates.push({ x, y });
       }
     }
   }
@@ -385,42 +275,35 @@ function loosenRandomBlock() {
   if (!candidates.length) return;
 
   const p = rand(candidates);
-
-  const cell = grid[p.y][p.x];
-
+  grid[p.y + 1][p.x] = grid[p.y][p.x];
   grid[p.y][p.x] = null;
-  grid[p.y+1][p.x] = cell;
 }
 
 function updateSand() {
-
   for (let y = ROWS - 2; y >= 0; y--) {
+    const startLeft = Math.random() < 0.5;
 
-    for (let x = 0; x < COLS; x++) {
-
+    for (let i = 0; i < COLS; i++) {
+      const x = startLeft ? i : COLS - 1 - i;
       const cell = grid[y][x];
 
       if (!cell) continue;
 
-      if (!grid[y+1][x]) {
+      if (Math.random() > getMoveChance(cell.type)) continue;
 
-        grid[y+1][x] = cell;
+      if (!grid[y + 1][x]) {
+        grid[y + 1][x] = cell;
         grid[y][x] = null;
-
       } else {
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        const nx1 = x + dir;
+        const nx2 = x - dir;
 
-        const dir =
-          Math.random() < 0.5 ? -1 : 1;
-
-        const nx = x + dir;
-
-        if (
-          nx >= 0 &&
-          nx < COLS &&
-          !grid[y+1][nx]
-        ) {
-
-          grid[y+1][nx] = cell;
+        if (canSandMove(nx1, y + 1)) {
+          grid[y + 1][nx1] = cell;
+          grid[y][x] = null;
+        } else if (canSandMove(nx2, y + 1)) {
+          grid[y + 1][nx2] = cell;
           grid[y][x] = null;
         }
       }
@@ -428,50 +311,38 @@ function updateSand() {
   }
 }
 
+function canSandMove(x, y) {
+  return x >= 0 && x < COLS && y >= 0 && y < ROWS && !grid[y][x];
+}
+
+function getMoveChance(type) {
+  if (type === "water") return 0.85;
+  if (type === "milk") return 0.48;
+  if (type === "coffee") return 0.45;
+  if (type === "gravel") return 0.18;
+  return 0.35;
+}
+
 function draw() {
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "#f8efd9";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   for (let y = 0; y < ROWS; y++) {
-
     for (let x = 0; x < COLS; x++) {
-
       const cell = grid[y][x];
-
       if (!cell) continue;
-
-      drawBlock(
-        x * CELL,
-        y * CELL,
-        CELL,
-        cell.color
-      );
+      drawBlock(ctx, x * CELL, y * CELL, CELL, cell.color);
     }
   }
 
   if (piece) {
-
     for (let y = 0; y < piece.shape.length; y++) {
-
       for (let x = 0; x < piece.shape[y].length; x++) {
-
         if (!piece.shape[y][x]) continue;
 
         drawBlock(
+          ctx,
           (piece.x + x * PIECE_SCALE) * CELL,
           (piece.y + y * PIECE_SCALE) * CELL,
           CELL * PIECE_SCALE,
@@ -480,65 +351,52 @@ function draw() {
       }
     }
   }
+
+  ctx.strokeStyle = "#2d1b14";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
 }
 
-function drawBlock(x,y,size,color) {
+function drawBlock(targetCtx, x, y, size, color) {
+  targetCtx.fillStyle = color;
+  targetCtx.fillRect(x, y, size, size);
 
-  ctx.fillStyle = color;
+  targetCtx.fillStyle = "rgba(255,255,255,0.18)";
+  targetCtx.fillRect(x + 1, y + 1, size - 2, Math.max(2, size * 0.16));
 
-  ctx.fillRect(x,y,size,size);
-
-  ctx.fillStyle =
-    "rgba(255,255,255,0.18)";
-
-  ctx.fillRect(
-    x+1,
-    y+1,
-    size-2,
-    Math.max(2,size*0.18)
-  );
-
-  ctx.strokeStyle =
-    "rgba(38,53,31,0.35)";
-
-  ctx.strokeRect(
-    x+0.5,
-    y+0.5,
-    size-1,
-    size-1
-  );
+  targetCtx.strokeStyle = "rgba(45,27,20,0.35)";
+  targetCtx.lineWidth = 1;
+  targetCtx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
 }
 
 function finishGame() {
+  if (!running) return;
 
   running = false;
-
   cancelAnimationFrame(gameLoop);
 
+  for (let i = 0; i < 80; i++) {
+    updateSand();
+  }
+
+  stopBgm();
+
   const score = evaluate();
-
   drawResultPreview();
-
   showResult(score);
-
   showScreen(resultScreen);
 }
 
 function evaluate() {
-
   let coffee = 0;
   let milk = 0;
   let water = 0;
   let gravel = 0;
-
   let total = 0;
 
   for (let y = 0; y < ROWS; y++) {
-
     for (let x = 0; x < COLS; x++) {
-
       const cell = grid[y][x];
-
       if (!cell) continue;
 
       total++;
@@ -551,7 +409,6 @@ function evaluate() {
   }
 
   if (!total) {
-
     return {
       point: 0,
       title: "空のコップ",
@@ -565,211 +422,123 @@ function evaluate() {
   const gravelRate = gravel / total;
 
   let point = 100;
+  point -= Math.abs(coffeeRate - 0.42) * 95;
+  point -= Math.abs(milkRate - 0.38) * 95;
+  point -= Math.abs(waterRate - 0.14) * 80;
+  point -= gravelRate * 160;
 
-  point -=
-    Math.abs(coffeeRate - 0.42) * 95;
-
-  point -=
-    Math.abs(milkRate - 0.38) * 95;
-
-  point -=
-    Math.abs(waterRate - 0.14) * 80;
-
-  point -=
-    gravelRate * 160;
-
-  point = Math.max(
-    0,
-    Math.min(100, Math.round(point))
-  );
-
-  let title;
-  let comment;
+  point = Math.max(0, Math.min(100, Math.round(point)));
 
   if (point >= 85) {
+    return {
+      point,
+      title: "駅前喫茶店",
+      comment: "かなりカフェオレ。"
+    };
+  }
 
-    title = "駅前喫茶店";
-    comment =
-      "かなりカフェオレ。";
+  if (point >= 65) {
+    return {
+      point,
+      title: "ぬるめの一杯",
+      comment: "飲めなくはない。"
+    };
+  }
 
-  } else if (point >= 65) {
-
-    title = "ぬるめの一杯";
-    comment =
-      "飲めなくはない。";
-
-  } else if (point >= 40) {
-
-    title = "砂場ラテ";
-    comment =
-      "気配だけはある。";
-
-  } else {
-
-    title = "深夜の泥水";
-    comment =
-      "別の意味で眠気覚まし。";
+  if (point >= 40) {
+    return {
+      point,
+      title: "砂場ラテ",
+      comment: "気配だけはある。"
+    };
   }
 
   return {
     point,
-    title,
-    comment
+    title: "深夜の泥水",
+    comment: "別の意味で眠気覚まし。"
   };
 }
 
 function drawResultPreview() {
-
-  resultCtx.clearRect(
-    0,
-    0,
-    resultCanvas.width,
-    resultCanvas.height
-  );
-
+  resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
   resultCtx.fillStyle = "#f8efd9";
-
-  resultCtx.fillRect(
-    0,
-    0,
-    resultCanvas.width,
-    resultCanvas.height
-  );
+  resultCtx.fillRect(0, 0, resultCanvas.width, resultCanvas.height);
 
   const scale = 7;
+  const offsetX = Math.floor((resultCanvas.width - COLS * scale) / 2);
+  const startY = ROWS - 24;
 
-  const offsetX =
-    Math.floor(
-      (resultCanvas.width - COLS * scale) / 2
-    );
-
-  for (let y = ROWS - 24; y < ROWS; y++) {
-
+  for (let y = startY; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-
       const cell = grid[y][x];
-
       if (!cell) continue;
 
       resultCtx.fillStyle = cell.color;
-
       resultCtx.fillRect(
         offsetX + x * scale,
-        (y - (ROWS - 24)) * scale + 8,
+        8 + (y - startY) * scale,
         scale,
         scale
       );
     }
   }
+
+  resultCtx.strokeStyle = "#2d1b14";
+  resultCtx.lineWidth = 3;
+  resultCtx.strokeRect(1.5, 1.5, resultCanvas.width - 3, resultCanvas.height - 3);
 }
 
 function showResult(score) {
-
-  resultTitle.textContent =
-    score.title;
-
-  resultScore.textContent =
-    `カフェオレっぽさ ${score.point}%`;
-
-  resultComment.textContent =
-    score.comment;
+  resultTitle.textContent = score.title;
+  resultScore.textContent = `カフェオレっぽさ ${score.point}%`;
+  resultComment.textContent = score.comment;
 }
 
 function pressButton(btn) {
-
-  btn.style.transform =
-    "translateY(3px)";
-
+  btn.style.transform = "translateY(3px)";
   setTimeout(() => {
-
     btn.style.transform = "";
-
   }, 90);
 }
 
-startBtn.addEventListener(
-  "click",
-  startGame
-);
+startBtn.addEventListener("click", startGame);
+retryBtn.addEventListener("click", startGame);
 
-retryBtn.addEventListener(
-  "click",
-  startGame
-);
+homeBtn.addEventListener("click", () => {
+  running = false;
+  cancelAnimationFrame(gameLoop);
+  stopBgm();
+  showScreen(titleScreen);
+});
 
-homeBtn.addEventListener(
-  "click",
-  () => {
+leftBtn.addEventListener("click", () => {
+  pressButton(leftBtn);
+  movePiece(-2);
+});
 
-    running = false;
+rightBtn.addEventListener("click", () => {
+  pressButton(rightBtn);
+  movePiece(2);
+});
 
-    cancelAnimationFrame(gameLoop);
+dropBtn.addEventListener("click", () => {
+  pressButton(dropBtn);
+  hardDropPiece();
+});
 
-    showScreen(titleScreen);
-  }
-);
+window.addEventListener("keydown", e => {
+  if (!running) return;
 
-leftBtn.addEventListener(
-  "click",
-  () => {
-
-    pressButton(leftBtn);
-
+  if (e.key === "ArrowLeft") {
     movePiece(-2);
-
-    playPi();
   }
-);
 
-rightBtn.addEventListener(
-  "click",
-  () => {
-
-    pressButton(rightBtn);
-
+  if (e.key === "ArrowRight") {
     movePiece(2);
-
-    playPi();
   }
-);
 
-dropBtn.addEventListener(
-  "click",
-  () => {
-
-    pressButton(dropBtn);
-
+  if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown") {
     hardDropPiece();
   }
-);
-
-window.addEventListener(
-  "keydown",
-  e => {
-
-    if (!running) return;
-
-    if (e.key === "ArrowLeft") {
-
-      movePiece(-2);
-
-      playPi();
-    }
-
-    if (e.key === "ArrowRight") {
-
-      movePiece(2);
-
-      playPi();
-    }
-
-    if (
-      e.key === " " ||
-      e.key === "Enter" ||
-      e.key === "ArrowDown"
-    ) {
-
-      hardDropPiece();
-    }
-  }
-);
+});

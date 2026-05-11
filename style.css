@@ -2,16 +2,9 @@
 
 :root {
   --app-height: 100dvh;
-
   --coffee-dark: #2d1b14;
   --coffee-mid: #6b3e26;
-  --coffee-light: #a56a43;
-
-  --milk: #f3e6c9;
-  --foam: #fff7e8;
-
   --panel: #ead7b3;
-
   --button: #8f4f2b;
   --button-dark: #5d2f18;
 }
@@ -25,27 +18,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-
   width: 100%;
   height: var(--app-height);
-
   overflow: hidden;
-
   font-family: 'Press Start 2P', system-ui, sans-serif;
-
-  background:
-    linear-gradient(rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.04) 50%),
-    var(--coffee-dark);
-
-  background-size: 100% 4px;
-}
-
-body {
+  background: var(--coffee-dark);
   color: var(--coffee-dark);
 }
 
 button {
-  font: inherit;
+  font-family: 'Press Start 2P', system-ui, sans-serif;
   border: 3px solid var(--coffee-dark);
   border-radius: 10px;
   cursor: pointer;
@@ -55,25 +37,20 @@ button {
 #app {
   width: 100%;
   height: var(--app-height);
-
   display: flex;
   justify-content: center;
   align-items: center;
-
   background:
+    linear-gradient(rgba(255,255,255,0.04) 50%, rgba(0,0,0,0.04) 50%),
     radial-gradient(circle at top, #6b3e26 0%, #2d1b14 100%);
+  background-size: 100% 4px, auto;
 }
 
 .screen {
   display: none;
-
   width: min(100vw, 430px);
   height: var(--app-height);
-
-  padding:
-    max(12px, env(safe-area-inset-top))
-    14px
-    max(12px, env(safe-area-inset-bottom));
+  padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
 }
 
 .screen.active {
@@ -83,184 +60,136 @@ button {
 .titleBox,
 .resultBox {
   margin: auto;
-
   width: 100%;
-  max-width: 360px;
-
-  padding: 22px 16px;
-
+  max-width: 370px;
+  padding: 20px 14px;
   background: var(--panel);
-
   border: 5px solid var(--coffee-dark);
-
   border-radius: 18px;
-
   box-shadow: 0 8px 0 #3b2418;
-
   text-align: center;
 }
 
 .titleImage {
   width: 100%;
-  max-width: 340px;
-
+  max-width: 350px;
   image-rendering: pixelated;
+  margin-bottom: 16px;
+}
 
-  margin-bottom: 18px;
+.ruleText {
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 2;
+  color: #4b2c1c;
 }
 
 p {
-  margin: 16px 0;
-
-  font-size: 11px;
-
-  line-height: 2;
-
+  margin: 14px 0;
+  font-size: 13px;
+  line-height: 1.8;
   color: #4b2c1c;
 }
 
 h2 {
   margin: 0 0 16px;
-
-  font-size: 20px;
-
-  line-height: 1.6;
-
+  font-size: 24px;
+  line-height: 1.5;
   color: #fff4dc;
-
-  text-shadow:
-    3px 3px 0 #5d2f18;
+  text-shadow: 3px 3px 0 #5d2f18;
 }
 
 .mainBtn,
 .subBtn {
   width: 100%;
-
   margin-top: 14px;
-
-  padding: 14px 10px;
-
-  font-size: 10px;
-
-  line-height: 1.7;
+  padding: 15px 8px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .mainBtn,
 #dropBtn {
   background: var(--button);
-
   color: #fff7ea;
-
   box-shadow: 0 5px 0 var(--button-dark);
 }
 
 .subBtn {
   background: #f5e7cd;
-
   color: var(--coffee-dark);
-
   box-shadow: 0 5px 0 #8e6a52;
 }
 
 #gameScreen {
   flex-direction: column;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 8px;
 }
 
 .topHud {
   width: 100%;
   max-width: 360px;
-
   display: flex;
   justify-content: space-between;
-
-  padding: 9px 10px;
-
+  padding: 10px 10px;
   background: #f6ead3;
-
   border: 3px solid var(--coffee-dark);
-
   border-radius: 10px;
-
   color: var(--coffee-dark);
-
-  font-size: 9px;
-
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 #gameCanvas {
   width: min(92vw, 360px);
-
   height: auto;
-
-  max-height: calc(var(--app-height) - 170px);
-
+  max-height: calc(var(--app-height) - 175px);
   image-rendering: pixelated;
-
   background: #f8efd9;
-
   border: 5px solid var(--coffee-dark);
-
   border-radius: 10px;
 }
 
 .controls {
   width: 100%;
   max-width: 360px;
-
   display: grid;
   grid-template-columns: 1fr 1.35fr 1fr;
-
   gap: 8px;
 }
 
 .controls button {
-  height: 58px;
-
-  font-size: 10px;
-
-  line-height: 1.6;
-
+  height: 62px;
+  font-size: 13px;
+  line-height: 1.4;
   background: #f5e7cd;
-
   color: var(--coffee-dark);
-
   box-shadow: 0 5px 0 #8e6a52;
 }
 
 #dropBtn {
   background: var(--button);
-
   color: #fff7ea;
-
   box-shadow: 0 5px 0 var(--button-dark);
 }
 
 #resultCanvas {
   width: 100%;
   max-width: 300px;
-
   height: auto;
-
   image-rendering: pixelated;
-
   background: #f8efd9;
-
   border: 5px solid var(--coffee-dark);
-
   border-radius: 10px;
 }
 
 #resultScore {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 13px;
 }
 
 #resultComment {
   min-height: 60px;
+  font-size: 13px;
 }
