@@ -519,7 +519,7 @@ ${GAME_URL}
 
 startBtn.addEventListener("click", startGame);
 titleImage.addEventListener("click", startGame);
-retryBtn.addEventListener("click", startGame);
+retryBtn.addEventListener("click", goTitle);
 homeBtn.addEventListener("click", goTitle);
 shareBtn.addEventListener("click", shareX);
 
