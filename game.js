@@ -13,9 +13,12 @@ const titleScreen = document.getElementById("titleScreen");
 const gameScreen = document.getElementById("gameScreen");
 const resultScreen = document.getElementById("resultScreen");
 
+const titleImage = document.getElementById("titleImage");
 const startBtn = document.getElementById("startBtn");
 const retryBtn = document.getElementById("retryBtn");
-const homeBtn = document.getElementById("homeBtn");
+const homeBtn = document.getElementById("backTitleBtn");
+const arcadeBtn = document.getElementById("arcadeBtn");
+const shareBtn = document.getElementById("shareBtn");
 
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
@@ -34,13 +37,16 @@ const resultScore = document.getElementById("resultScore");
 const resultComment = document.getElementById("resultComment");
 
 const bgm = document.getElementById("bgm");
-const piSe = document.getElementById("piSe");
+const fallSe = document.getElementById("fallSe");
 
 const COLS = 24;
 const ROWS = 36;
 const CELL = 10;
 const PIECE_SCALE = 2;
 const MAX_PIECES = 20;
+
+const GAME_URL = "https://afoolhippo.github.io/game12/";
+const HOME_URL = "https://afoolhippo.github.io/home/?skipTitle=1";
 
 const MATERIALS = {
   coffee: { color: "#7a3f22" },
@@ -68,6 +74,8 @@ let gameLoop = null;
 let dropCounter = 0;
 let sandCounter = 0;
 let running = false;
+let lastScore = 0;
+let lastTitle = "結果";
 
 function playBgm() {
   bgm.volume = 0.55;
@@ -80,10 +88,10 @@ function stopBgm() {
   bgm.currentTime = 0;
 }
 
-function playPi() {
-  piSe.currentTime = 0;
-  piSe.volume = 0.8;
-  piSe.play().catch(() => {});
+function playFall() {
+  fallSe.currentTime = 0;
+  fallSe.volume = 0.85;
+  fallSe.play().catch(() => {});
 }
 
 function showScreen(screen) {
@@ -118,7 +126,6 @@ function startGame() {
   sandCounter = 0;
   running = true;
   countText.textContent = "0";
-
   piece = createPiece();
 
   showScreen(gameScreen);
@@ -154,7 +161,6 @@ function loop() {
 
 function getPieceCells(targetPiece = piece) {
   const cells = [];
-
   if (!targetPiece) return cells;
 
   for (let y = 0; y < targetPiece.shape.length; y++) {
@@ -178,9 +184,7 @@ function getPieceCells(targetPiece = piece) {
 function canMove(dx, dy, targetPiece = piece) {
   if (!targetPiece) return false;
 
-  const cells = getPieceCells(targetPiece);
-
-  for (const c of cells) {
+  for (const c of getPieceCells(targetPiece)) {
     const nx = c.x + dx;
     const ny = c.y + dy;
 
@@ -196,7 +200,6 @@ function movePiece(dx) {
 
   if (canMove(dx, 0)) {
     piece.x += dx;
-    playPi();
     draw();
   }
 }
@@ -226,9 +229,8 @@ function lockPiece() {
   if (!piece) return;
 
   const lockedPiece = piece;
-  const cells = getPieceCells(lockedPiece);
 
-  for (const c of cells) {
+  for (const c of getPieceCells(lockedPiece)) {
     if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
       grid[c.y][c.x] = {
         type: lockedPiece.material,
@@ -241,19 +243,13 @@ function lockPiece() {
   piecesDropped++;
   countText.textContent = String(piecesDropped);
 
-  for (let i = 0; i < 20; i++) {
-    updateSand();
-  }
+  for (let i = 0; i < 20; i++) updateSand();
 
   if (piecesDropped >= MAX_PIECES) {
     finishGame();
     return;
   }
 
-  spawnNextPiece();
-}
-
-function spawnNextPiece() {
   piece = createPiece();
 
   if (!canMove(0, 0, piece)) {
@@ -288,7 +284,6 @@ function updateSand() {
       const cell = grid[y][x];
 
       if (!cell) continue;
-
       if (Math.random() > getMoveChance(cell.type)) continue;
 
       if (!grid[y + 1][x]) {
@@ -375,13 +370,14 @@ function finishGame() {
   running = false;
   cancelAnimationFrame(gameLoop);
 
-  for (let i = 0; i < 80; i++) {
-    updateSand();
-  }
+  for (let i = 0; i < 80; i++) updateSand();
 
   stopBgm();
 
   const score = evaluate();
+  lastScore = score.point;
+  lastTitle = score.title;
+
   drawResultPreview();
   showResult(score);
   showScreen(resultScreen);
@@ -393,6 +389,7 @@ function evaluate() {
   let water = 0;
   let gravel = 0;
   let total = 0;
+  let coffeeMilkTouch = 0;
 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
@@ -405,15 +402,24 @@ function evaluate() {
       if (cell.type === "milk") milk++;
       if (cell.type === "water") water++;
       if (cell.type === "gravel") gravel++;
+
+      if (cell.type === "coffee") {
+        const neighbors = [
+          grid[y]?.[x + 1],
+          grid[y + 1]?.[x],
+          grid[y]?.[x - 1],
+          grid[y - 1]?.[x]
+        ];
+
+        neighbors.forEach(n => {
+          if (n && n.type === "milk") coffeeMilkTouch++;
+        });
+      }
     }
   }
 
   if (!total) {
-    return {
-      point: 0,
-      title: "空のコップ",
-      comment: "何も入っていない。"
-    };
+    return { point: 0, title: "空のコップ", comment: "何も入っていない。" };
   }
 
   const coffeeRate = coffee / total;
@@ -422,42 +428,34 @@ function evaluate() {
   const gravelRate = gravel / total;
 
   let point = 100;
-  point -= Math.abs(coffeeRate - 0.42) * 95;
-  point -= Math.abs(milkRate - 0.38) * 95;
-  point -= Math.abs(waterRate - 0.14) * 80;
-  point -= gravelRate * 160;
+  point -= Math.abs(coffeeRate - 0.42) * 85;
+  point -= Math.abs(milkRate - 0.38) * 85;
+  point -= Math.abs(waterRate - 0.14) * 70;
+  point -= gravelRate * 150;
+
+  const idealTouch = 95;
+  const mixPoint = Math.max(0, 24 - Math.abs(coffeeMilkTouch - idealTouch) * 0.18);
+  point += mixPoint;
 
   point = Math.max(0, Math.min(100, Math.round(point)));
 
   if (point >= 85) {
-    return {
-      point,
-      title: "駅前喫茶店",
-      comment: "かなりカフェオレ。"
-    };
+    return { point, title: "駅前喫茶店", comment: "かなりカフェオレ。混ざりも上品。" };
   }
 
   if (point >= 65) {
-    return {
-      point,
-      title: "ぬるめの一杯",
-      comment: "飲めなくはない。"
-    };
+    return { point, title: "ぬるめの一杯", comment: "飲めなくはない。むしろ少し好き。" };
   }
 
   if (point >= 40) {
-    return {
-      point,
-      title: "砂場ラテ",
-      comment: "気配だけはある。"
-    };
+    return { point, title: "砂場ラテ", comment: "カフェオレの気配だけはある。" };
   }
 
-  return {
-    point,
-    title: "深夜の泥水",
-    comment: "別の意味で眠気覚まし。"
-  };
+  if (point >= 20) {
+    return { point, title: "深夜の泥水", comment: "別の意味で眠気覚まし。" };
+  }
+
+  return { point, title: "排水口ブレンド", comment: "これは飲み物ではない。" };
 }
 
 function drawResultPreview() {
@@ -475,12 +473,7 @@ function drawResultPreview() {
       if (!cell) continue;
 
       resultCtx.fillStyle = cell.color;
-      resultCtx.fillRect(
-        offsetX + x * scale,
-        8 + (y - startY) * scale,
-        scale,
-        scale
-      );
+      resultCtx.fillRect(offsetX + x * scale, 8 + (y - startY) * scale, scale, scale);
     }
   }
 
@@ -502,14 +495,35 @@ function pressButton(btn) {
   }, 90);
 }
 
-startBtn.addEventListener("click", startGame);
-retryBtn.addEventListener("click", startGame);
-
-homeBtn.addEventListener("click", () => {
+function goTitle() {
   running = false;
   cancelAnimationFrame(gameLoop);
   stopBgm();
   showScreen(titleScreen);
+}
+
+function shareX() {
+  const text =
+`テトリスコーヒーでカフェオレを作った☕🧱
+称号：${lastTitle}
+カフェオレっぽさ ${lastScore}%
+
+無料ブラウザゲーム「テトリスコーヒー」
+${GAME_URL}
+#テトリスコーヒー #カバゲーセン`;
+
+  const shareUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+  window.location.href = shareUrl;
+}
+
+startBtn.addEventListener("click", startGame);
+titleImage.addEventListener("click", startGame);
+retryBtn.addEventListener("click", startGame);
+homeBtn.addEventListener("click", goTitle);
+shareBtn.addEventListener("click", shareX);
+
+arcadeBtn.addEventListener("click", () => {
+  location.href = HOME_URL;
 });
 
 leftBtn.addEventListener("click", () => {
@@ -524,21 +538,18 @@ rightBtn.addEventListener("click", () => {
 
 dropBtn.addEventListener("click", () => {
   pressButton(dropBtn);
+  playFall();
   hardDropPiece();
 });
 
 window.addEventListener("keydown", e => {
   if (!running) return;
 
-  if (e.key === "ArrowLeft") {
-    movePiece(-2);
-  }
-
-  if (e.key === "ArrowRight") {
-    movePiece(2);
-  }
+  if (e.key === "ArrowLeft") movePiece(-2);
+  if (e.key === "ArrowRight") movePiece(2);
 
   if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown") {
+    playFall();
     hardDropPiece();
   }
 });

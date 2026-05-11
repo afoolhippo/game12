@@ -9,19 +9,16 @@
 <body>
   <div id="app">
     <section id="titleScreen" class="screen active">
-      <div class="titleBox">
-        <img src="title.png" class="titleImage" alt="テトリスコーヒー">
-
-        <p class="ruleText">
-          テトリミノを崩して<br>
-          カフェオレをつくれ！
-        </p>
-
+      <div class="titleBox topBox">
+        <img id="titleImage" src="title.png" class="titleImage" alt="テトリスコーヒー">
+        <p class="ruleText">落として、崩して、混ぜろ！<br>カフェオレっぽさを競え！</p>
         <button id="startBtn" class="mainBtn">タップしてスタート</button>
       </div>
     </section>
 
     <section id="gameScreen" class="screen">
+      <button id="backTitleBtn" class="backTitleBtn">タイトルへ戻る</button>
+
       <div class="topHud">
         <div>CAFE AU LAIT</div>
         <div><span id="countText">0</span>/20</div>
@@ -37,21 +34,22 @@
     </section>
 
     <section id="resultScreen" class="screen">
-      <div class="resultBox">
+      <div class="resultBox topBox">
         <h2 id="resultTitle">結果</h2>
         <canvas id="resultCanvas" width="240" height="180"></canvas>
 
         <p id="resultScore"></p>
         <p id="resultComment"></p>
 
-        <button id="retryBtn" class="mainBtn">もう一杯つくる</button>
-        <button id="homeBtn" class="subBtn">タイトルへ戻る</button>
+        <button id="shareBtn" class="mainBtn">Xでシェア</button>
+        <button id="retryBtn" class="subBtn">もう1回遊ぶ</button>
+        <button id="arcadeBtn" class="subBtn">カバゲーセンへ</button>
       </div>
     </section>
   </div>
 
   <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
-  <audio id="piSe" src="pi.mp3" preload="auto"></audio>
+  <audio id="fallSe" src="fall.mp3" preload="auto"></audio>
 
   <script src="game.js"></script>
 </body>
