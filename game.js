@@ -456,7 +456,9 @@ function evaluate() {
   }
 
   return { point, title: "排水口ブレンド", comment: "これは飲み物ではない。" };
+<p id="mixHint">ほどよいマーブル感が高評価のコツ！</p>
 }
+
 
 function drawResultPreview() {
   resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);

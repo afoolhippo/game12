@@ -211,3 +211,9 @@ h2 {
 #resultComment {
   min-height: 54px;
 }
+
+#mixHint {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #5d2f18;
+}
