@@ -9,6 +9,20 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", setAppHeight);
 }
 
+const GAME_ID = "game12";
+const GAME_TITLE = "テトリスコーヒー";
+
+const GAME_URL = "https://afoolhippo.github.io/game12/";
+const HOME_URL = "https://afoolhippo.github.io/home/?skipTitle=1";
+
+const SUPABASE_URL = "https://gmncxnybsovlallxgnkd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ly3h5OhL8HDSHhYdmJq_Fw_9pG3mhla";
+
+const kabaDb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
 const titleScreen = document.getElementById("titleScreen");
 const gameScreen = document.getElementById("gameScreen");
 const resultScreen = document.getElementById("resultScreen");
@@ -19,6 +33,8 @@ const retryBtn = document.getElementById("retryBtn");
 const homeBtn = document.getElementById("backTitleBtn");
 const arcadeBtn = document.getElementById("arcadeBtn");
 const shareBtn = document.getElementById("shareBtn");
+const registerButton = document.getElementById("registerButton");
+const resultButtons = document.getElementById("resultButtons");
 
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
@@ -45,9 +61,6 @@ const CELL = 10;
 const PIECE_SCALE = 2;
 const MAX_PIECES = 20;
 
-const GAME_URL = "https://afoolhippo.github.io/game12/";
-const HOME_URL = "https://afoolhippo.github.io/home/?skipTitle=1";
-
 const MATERIALS = {
   coffee: { color: "#7a3f22" },
   milk: { color: "#f1e6c8" },
@@ -55,7 +68,14 @@ const MATERIALS = {
   gravel: { color: "#77776d" }
 };
 
-const MATERIAL_LIST = ["coffee", "coffee", "milk", "milk", "water", "gravel"];
+const MATERIAL_LIST = [
+  "coffee",
+  "coffee",
+  "milk",
+  "milk",
+  "water",
+  "gravel"
+];
 
 const SHAPES = [
   [[1, 1, 1, 1]],
@@ -69,13 +89,16 @@ const SHAPES = [
 
 let grid;
 let piece;
+
 let piecesDropped = 0;
 let gameLoop = null;
 let dropCounter = 0;
 let sandCounter = 0;
 let running = false;
+
 let lastScore = 0;
 let lastTitle = "結果";
+let scoreRegistered = false;
 
 function playBgm() {
   bgm.volume = 0.55;
@@ -95,12 +118,33 @@ function playFall() {
 }
 
 function showScreen(screen) {
-  [titleScreen, gameScreen, resultScreen].forEach(s => s.classList.remove("active"));
+  [titleScreen, gameScreen, resultScreen].forEach(s => {
+    s.classList.remove("active");
+  });
+
   screen.classList.add("active");
 }
 
+function showResultButtonsLater() {
+  resultButtons.classList.add("hidden");
+
+  setTimeout(() => {
+    resultButtons.classList.remove("hidden");
+  }, 1500);
+}
+
+function resetRegisterButton() {
+  scoreRegistered = false;
+  registerButton.disabled = false;
+  registerButton.textContent = "記録を登録";
+  resultButtons.classList.add("hidden");
+}
+
 function emptyGrid() {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  return Array.from(
+    { length: ROWS },
+    () => Array(COLS).fill(null)
+  );
 }
 
 function rand(arr) {
@@ -121,12 +165,19 @@ function createPiece() {
 
 function startGame() {
   grid = emptyGrid();
+
   piecesDropped = 0;
   dropCounter = 0;
   sandCounter = 0;
   running = true;
+
+  lastScore = 0;
+  lastTitle = "結果";
+
   countText.textContent = "0";
   piece = createPiece();
+
+  resetRegisterButton();
 
   showScreen(gameScreen);
   playBgm();
@@ -161,6 +212,7 @@ function loop() {
 
 function getPieceCells(targetPiece = piece) {
   const cells = [];
+
   if (!targetPiece) return cells;
 
   for (let y = 0; y < targetPiece.shape.length; y++) {
@@ -231,7 +283,12 @@ function lockPiece() {
   const lockedPiece = piece;
 
   for (const c of getPieceCells(lockedPiece)) {
-    if (c.y >= 0 && c.y < ROWS && c.x >= 0 && c.x < COLS) {
+    if (
+      c.y >= 0 &&
+      c.y < ROWS &&
+      c.x >= 0 &&
+      c.x < COLS
+    ) {
       grid[c.y][c.x] = {
         type: lockedPiece.material,
         color: MATERIALS[lockedPiece.material].color
@@ -240,10 +297,13 @@ function lockPiece() {
   }
 
   piece = null;
+
   piecesDropped++;
   countText.textContent = String(piecesDropped);
 
-  for (let i = 0; i < 20; i++) updateSand();
+  for (let i = 0; i < 20; i++) {
+    updateSand();
+  }
 
   if (piecesDropped >= MAX_PIECES) {
     finishGame();
@@ -327,7 +387,14 @@ function draw() {
     for (let x = 0; x < COLS; x++) {
       const cell = grid[y][x];
       if (!cell) continue;
-      drawBlock(ctx, x * CELL, y * CELL, CELL, cell.color);
+
+      drawBlock(
+        ctx,
+        x * CELL,
+        y * CELL,
+        CELL,
+        cell.color
+      );
     }
   }
 
@@ -357,11 +424,21 @@ function drawBlock(targetCtx, x, y, size, color) {
   targetCtx.fillRect(x, y, size, size);
 
   targetCtx.fillStyle = "rgba(255,255,255,0.18)";
-  targetCtx.fillRect(x + 1, y + 1, size - 2, Math.max(2, size * 0.16));
+  targetCtx.fillRect(
+    x + 1,
+    y + 1,
+    size - 2,
+    Math.max(2, size * 0.16)
+  );
 
   targetCtx.strokeStyle = "rgba(45,27,20,0.35)";
   targetCtx.lineWidth = 1;
-  targetCtx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+  targetCtx.strokeRect(
+    x + 0.5,
+    y + 0.5,
+    size - 1,
+    size - 1
+  );
 }
 
 function finishGame() {
@@ -370,17 +447,21 @@ function finishGame() {
   running = false;
   cancelAnimationFrame(gameLoop);
 
-  for (let i = 0; i < 80; i++) updateSand();
+  for (let i = 0; i < 80; i++) {
+    updateSand();
+  }
 
   stopBgm();
 
   const score = evaluate();
+
   lastScore = score.point;
   lastTitle = score.title;
 
   drawResultPreview();
   showResult(score);
   showScreen(resultScreen);
+  showResultButtonsLater();
 }
 
 function evaluate() {
@@ -394,6 +475,7 @@ function evaluate() {
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const cell = grid[y][x];
+
       if (!cell) continue;
 
       total++;
@@ -412,14 +494,20 @@ function evaluate() {
         ];
 
         neighbors.forEach(n => {
-          if (n && n.type === "milk") coffeeMilkTouch++;
+          if (n && n.type === "milk") {
+            coffeeMilkTouch++;
+          }
         });
       }
     }
   }
 
   if (!total) {
-    return { point: 0, title: "空のコップ", comment: "何も入っていない。" };
+    return {
+      point: 0,
+      title: "空のコップ",
+      comment: "何も入っていない。"
+    };
   }
 
   const coffeeRate = coffee / total;
@@ -428,59 +516,111 @@ function evaluate() {
   const gravelRate = gravel / total;
 
   let point = 100;
+
   point -= Math.abs(coffeeRate - 0.42) * 85;
   point -= Math.abs(milkRate - 0.38) * 85;
   point -= Math.abs(waterRate - 0.14) * 70;
   point -= gravelRate * 150;
 
   const idealTouch = 95;
-  const mixPoint = Math.max(0, 24 - Math.abs(coffeeMilkTouch - idealTouch) * 0.18);
+  const mixPoint = Math.max(
+    0,
+    24 - Math.abs(coffeeMilkTouch - idealTouch) * 0.18
+  );
+
   point += mixPoint;
 
-  point = Math.max(0, Math.min(100, Math.round(point)));
+  point = Math.max(
+    0,
+    Math.min(100, Math.round(point))
+  );
 
   if (point >= 85) {
-    return { point, title: "駅前喫茶店", comment: "かなりカフェオレ。混ざりも上品。" };
+    return {
+      point,
+      title: "駅前喫茶店",
+      comment: "かなりカフェオレ。混ざりも上品。"
+    };
   }
 
   if (point >= 65) {
-    return { point, title: "ぬるめの一杯", comment: "飲めなくはない。むしろ少し好き。" };
+    return {
+      point,
+      title: "ぬるめの一杯",
+      comment: "飲めなくはない。むしろ少し好き。"
+    };
   }
 
   if (point >= 40) {
-    return { point, title: "砂場ラテ", comment: "カフェオレの気配だけはある。" };
+    return {
+      point,
+      title: "砂場ラテ",
+      comment: "カフェオレの気配だけはある。"
+    };
   }
 
   if (point >= 20) {
-    return { point, title: "深夜の泥水", comment: "別の意味で眠気覚まし。" };
+    return {
+      point,
+      title: "深夜の泥水",
+      comment: "別の意味で眠気覚まし。"
+    };
   }
 
-  return { point, title: "排水口ブレンド", comment: "これは飲み物ではない。" };
+  return {
+    point,
+    title: "排水口ブレンド",
+    comment: "これは飲み物ではない。"
+  };
 }
 
-
 function drawResultPreview() {
-  resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+  resultCtx.clearRect(
+    0,
+    0,
+    resultCanvas.width,
+    resultCanvas.height
+  );
+
   resultCtx.fillStyle = "#f8efd9";
-  resultCtx.fillRect(0, 0, resultCanvas.width, resultCanvas.height);
+  resultCtx.fillRect(
+    0,
+    0,
+    resultCanvas.width,
+    resultCanvas.height
+  );
 
   const scale = 7;
-  const offsetX = Math.floor((resultCanvas.width - COLS * scale) / 2);
+  const offsetX = Math.floor(
+    (resultCanvas.width - COLS * scale) / 2
+  );
+
   const startY = ROWS - 24;
 
   for (let y = startY; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const cell = grid[y][x];
+
       if (!cell) continue;
 
       resultCtx.fillStyle = cell.color;
-      resultCtx.fillRect(offsetX + x * scale, 8 + (y - startY) * scale, scale, scale);
+      resultCtx.fillRect(
+        offsetX + x * scale,
+        8 + (y - startY) * scale,
+        scale,
+        scale
+      );
     }
   }
 
   resultCtx.strokeStyle = "#2d1b14";
   resultCtx.lineWidth = 3;
-  resultCtx.strokeRect(1.5, 1.5, resultCanvas.width - 3, resultCanvas.height - 3);
+  resultCtx.strokeRect(
+    1.5,
+    1.5,
+    resultCanvas.width - 3,
+    resultCanvas.height - 3
+  );
 }
 
 function showResult(score) {
@@ -491,6 +631,7 @@ function showResult(score) {
 
 function pressButton(btn) {
   btn.style.transform = "translateY(3px)";
+
   setTimeout(() => {
     btn.style.transform = "";
   }, 90);
@@ -501,6 +642,7 @@ function goTitle() {
   cancelAnimationFrame(gameLoop);
   stopBgm();
   showScreen(titleScreen);
+  resultButtons.classList.add("hidden");
 }
 
 function shareX() {
@@ -513,15 +655,63 @@ function shareX() {
 ${GAME_URL}
 #テトリスコーヒー #カバゲーセン`;
 
-  const shareUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+  const shareUrl =
+    "https://twitter.com/intent/tweet?text=" +
+    encodeURIComponent(text);
+
   window.location.href = shareUrl;
+}
+
+async function registerScore() {
+  if (scoreRegistered) {
+    alert("この記録は登録済みです");
+    return;
+  }
+
+  const nickname = prompt(
+    "ニックネームを入力してね",
+    "匿名カバ"
+  );
+
+  if (!nickname) return;
+
+  registerButton.disabled = true;
+  registerButton.textContent = "登録中...";
+
+  const { error } = await kabaDb
+    .from("kaba_scores")
+    .insert({
+      game_id: GAME_ID,
+      game_title: GAME_TITLE,
+      nickname: nickname,
+      rank_title: lastTitle,
+      score: lastScore
+    });
+
+  if (error) {
+    console.error(error);
+
+    registerButton.disabled = false;
+    registerButton.textContent = "記録を登録";
+
+    alert("登録に失敗しました");
+    return;
+  }
+
+  scoreRegistered = true;
+  registerButton.textContent = "登録済み";
+
+  alert("記録を登録しました！");
 }
 
 startBtn.addEventListener("click", startGame);
 titleImage.addEventListener("click", startGame);
+
 retryBtn.addEventListener("click", goTitle);
 homeBtn.addEventListener("click", goTitle);
+
 shareBtn.addEventListener("click", shareX);
+registerButton.addEventListener("click", registerScore);
 
 arcadeBtn.addEventListener("click", () => {
   location.href = HOME_URL;
@@ -546,10 +736,19 @@ dropBtn.addEventListener("click", () => {
 window.addEventListener("keydown", e => {
   if (!running) return;
 
-  if (e.key === "ArrowLeft") movePiece(-2);
-  if (e.key === "ArrowRight") movePiece(2);
+  if (e.key === "ArrowLeft") {
+    movePiece(-2);
+  }
 
-  if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown") {
+  if (e.key === "ArrowRight") {
+    movePiece(2);
+  }
+
+  if (
+    e.key === " " ||
+    e.key === "Enter" ||
+    e.key === "ArrowDown"
+  ) {
     playFall();
     hardDropPiece();
   }

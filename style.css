@@ -1,8 +1,11 @@
 :root {
   --app-height: 100dvh;
+
   --coffee-dark: #2d1b14;
   --coffee-mid: #6b3e26;
+
   --panel: #ead7b3;
+
   --button: #8f4f2b;
   --button-dark: #5d2f18;
 }
@@ -16,10 +19,18 @@ html,
 body {
   margin: 0;
   padding: 0;
+
   width: 100%;
   height: var(--app-height);
+
   overflow: hidden;
-  font-family: Georgia, "Yu Mincho", "Hiragino Mincho ProN", serif;
+
+  font-family:
+    Georgia,
+    "Yu Mincho",
+    "Hiragino Mincho ProN",
+    serif;
+
   background: var(--coffee-dark);
   color: var(--coffee-dark);
 }
@@ -27,8 +38,10 @@ body {
 button {
   font-family: inherit;
   font-weight: 900;
+
   border: 3px solid var(--coffee-dark);
   border-radius: 10px;
+
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -36,21 +49,39 @@ button {
 #app {
   width: 100%;
   height: var(--app-height);
+
   display: flex;
   justify-content: center;
   align-items: center;
+
   background:
-    linear-gradient(rgba(255,255,255,0.04) 50%, rgba(0,0,0,0.04) 50%),
-    radial-gradient(circle at top, #6b3e26 0%, #2d1b14 100%);
-  background-size: 100% 4px, auto;
+    linear-gradient(
+      rgba(255,255,255,0.04) 50%,
+      rgba(0,0,0,0.04) 50%
+    ),
+    radial-gradient(
+      circle at top,
+      #6b3e26 0%,
+      #2d1b14 100%
+    );
+
+  background-size:
+    100% 4px,
+    auto;
 }
 
 .screen {
   display: none;
+
   position: relative;
+
   width: min(100vw, 430px);
   height: var(--app-height);
-  padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+
+  padding:
+    max(12px, env(safe-area-inset-top))
+    14px
+    max(12px, env(safe-area-inset-bottom));
 }
 
 .screen.active {
@@ -58,114 +89,172 @@ button {
 }
 
 .topBox {
-  margin: 22px auto auto;
+  margin: 18px auto auto;
 }
 
 .titleBox,
 .resultBox {
   width: 100%;
   max-width: 370px;
+
   padding: 18px 14px;
+
   background: var(--panel);
+
   border: 5px solid var(--coffee-dark);
   border-radius: 18px;
-  box-shadow: 0 8px 0 #3b2418;
+
+  box-shadow:
+    0 8px 0 #3b2418;
+
   text-align: center;
 }
 
 .titleImage {
   width: 100%;
   max-width: 350px;
+
   image-rendering: pixelated;
-  margin-bottom: 14px;
+
+  margin-bottom: 10px;
+
   cursor: pointer;
 }
 
 .ruleText {
-  margin: 14px 0;
+  margin: 12px 0;
+
   font-size: 18px;
   font-weight: 900;
+
   line-height: 1.7;
+
   color: #2d1b14;
 }
 
 p {
-  margin: 13px 0;
+  margin: 10px 0;
+
   font-size: 17px;
   font-weight: 900;
+
   line-height: 1.7;
+
   color: #2d1b14;
 }
 
 h2 {
-  margin: 0 0 14px;
-  font-size: 32px;
+  margin: 0 0 12px;
+
+  font-size: 30px;
+  font-weight: 900;
+
   line-height: 1.35;
+
   color: #2d1b14;
 }
 
-.mainBtn,
-.subBtn {
+.mainBtn {
   width: 100%;
-  margin-top: 12px;
-  padding: 14px 8px;
-  font-size: 18px;
-  line-height: 1.3;
-}
 
-.mainBtn,
-#dropBtn {
+  margin-top: 12px;
+
+  padding: 14px 8px;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  line-height: 1.3;
+
   background: var(--button);
   color: #fff7ea;
-  box-shadow: 0 5px 0 var(--button-dark);
+
+  box-shadow:
+    0 5px 0 var(--button-dark);
 }
 
 .subBtn {
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 14px 8px;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  line-height: 1.3;
+
   background: #f5e7cd;
   color: var(--coffee-dark);
-  box-shadow: 0 5px 0 #8e6a52;
+
+  box-shadow:
+    0 5px 0 #8e6a52;
 }
 
 #gameScreen {
   flex-direction: column;
+
   align-items: center;
   justify-content: space-between;
+
   gap: 8px;
 }
 
 .backTitleBtn {
   position: absolute;
+
   top: max(10px, env(safe-area-inset-top));
   right: 10px;
+
   z-index: 5;
-  padding: 7px 9px;
+
+  padding: 7px 10px;
+
   background: #f5e7cd;
   color: var(--coffee-dark);
+
   font-size: 12px;
-  box-shadow: 0 3px 0 #8e6a52;
+  font-weight: 900;
+
+  box-shadow:
+    0 3px 0 #8e6a52;
 }
 
 .topHud {
   width: 100%;
   max-width: 360px;
+
   margin-top: 38px;
+
   display: flex;
   justify-content: space-between;
+
   padding: 10px;
+
   background: #f6ead3;
+
   border: 3px solid var(--coffee-dark);
   border-radius: 10px;
+
   font-size: 16px;
   font-weight: 900;
+
   line-height: 1.4;
 }
 
 #gameCanvas {
   width: min(92vw, 360px);
+
   height: auto;
-  max-height: calc(var(--app-height) - 185px);
+
+  max-height:
+    calc(var(--app-height) - 185px);
+
   image-rendering: pixelated;
+
   background: #f8efd9;
+
   border: 5px solid var(--coffee-dark);
   border-radius: 10px;
 }
@@ -173,31 +262,44 @@ h2 {
 .controls {
   width: 100%;
   max-width: 360px;
+
   display: grid;
   grid-template-columns: 1fr 1.35fr 1fr;
+
   gap: 8px;
 }
 
 .controls button {
   height: 62px;
+
   font-size: 20px;
+  font-weight: 900;
+
   background: #f5e7cd;
   color: var(--coffee-dark);
-  box-shadow: 0 5px 0 #8e6a52;
+
+  box-shadow:
+    0 5px 0 #8e6a52;
 }
 
 #dropBtn {
   background: var(--button);
   color: #fff7ea;
-  box-shadow: 0 5px 0 var(--button-dark);
+
+  box-shadow:
+    0 5px 0 var(--button-dark);
 }
 
 #resultCanvas {
   width: 100%;
   max-width: 300px;
+
   height: auto;
+
   image-rendering: pixelated;
+
   background: #f8efd9;
+
   border: 5px solid var(--coffee-dark);
   border-radius: 10px;
 }
@@ -205,6 +307,8 @@ h2 {
 #resultScore,
 #resultComment {
   font-size: 18px;
+  font-weight: 900;
+
   color: #2d1b14;
 }
 
@@ -213,7 +317,109 @@ h2 {
 }
 
 #mixHint {
-  margin-top: 6px;
+  margin-top: 4px;
+
   font-size: 14px;
+  font-weight: 700;
+
   color: #5d2f18;
+}
+
+/* =========================
+   結果ボタン共通仕様
+========================= */
+
+.resultButtons {
+  width: min(92%, 360px);
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 10px;
+
+  margin-top: 10px;
+
+  opacity: 1;
+  transform: translateY(0);
+
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.resultButtons.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+
+  pointer-events: none;
+}
+
+.resultButton {
+  width: 100%;
+
+  min-height: 56px;
+
+  padding: 10px 6px;
+
+  border: 3px solid var(--coffee-dark);
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.08s ease,
+    opacity 0.2s ease;
+}
+
+.resultButton:active {
+  transform: translateY(2px);
+}
+
+/* Xでシェア */
+
+#shareBtn {
+  background: var(--button);
+  color: #fff7ea;
+
+  box-shadow:
+    0 5px 0 var(--button-dark);
+}
+
+/* 記録を登録 */
+
+#registerButton {
+  background: #f3e5c5;
+  color: var(--coffee-dark);
+
+  box-shadow:
+    0 5px 0 #8e6a52;
+}
+
+#registerButton:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* もう1回遊ぶ */
+
+#retryBtn {
+  background: #f5e7cd;
+  color: var(--coffee-dark);
+
+  box-shadow:
+    0 5px 0 #8e6a52;
+}
+
+/* カバゲーセンへ */
+
+#arcadeBtn {
+  background: #f5e7cd;
+  color: var(--coffee-dark);
+
+  box-shadow:
+    0 5px 0 #8e6a52;
 }
